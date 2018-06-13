@@ -10,7 +10,7 @@ USER root
 
 #一些基础操作
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-RUN echo "nameserver 114.114.114.114">>/etc/resolv.conf
+#RUN echo "nameserver 114.114.114.114">>/etc/resolv.conf
 RUN yum update
 #RUN yum -y groupinstall 'Development Tools'
 RUN yum -y install git gcc gcc-c++ make automake autoconf libtool pcre pcre-devel zlib zlib-devel openssl-devel wget vim net-tools
