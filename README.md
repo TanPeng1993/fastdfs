@@ -10,7 +10,7 @@
   启动storage
   docker run -itd --net=host --name storage -v /home/fastdfs/storage:/fastdfs/storage fastdfs storage
   启动nginx
-  docker run -itd --net=host --name nginx fastdfs nginx
+  docker run -itd --net=host --name nginx -v /home/fastdfs/storage:/fastdfs/storage fastdfs nginx
   测试客户端
   docker run -itd --net=host --name client fastdfs monitor
   
