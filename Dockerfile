@@ -10,6 +10,7 @@ USER root
 
 #一些基础操作
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+RUN echo "nameserver 114.114.114.114">>/etc/resolv.conf
 RUN yum update
 #RUN yum -y groupinstall 'Development Tools'
 RUN yum -y install git gcc gcc-c++ make automake autoconf libtool pcre pcre-devel zlib zlib-devel openssl-devel wget vim net-tools
@@ -18,7 +19,11 @@ RUN yum -y install git gcc gcc-c++ make automake autoconf libtool pcre pcre-deve
 RUN mkdir -p /fastdfs/tracker
 RUN mkdir -p /fastdfs/storage
 RUN mkdir -p /root/upload_test 
+#RUN mkdir -p /fastdfs/nginx_read
 #RUN mkdir -p /home/yuqing/fastdfs
+
+#创建软连接
+#RUN ln -s /fastdfs/storage /fastdfs/nginx_read/storage
   
 #切换到安装目录准备下载安装包
 WORKDIR /usr/local/src
@@ -74,6 +79,9 @@ COPY fdfsconf/*.* /etc/fdfs/
 #添加启动脚本
 COPY start.sh /usr/bin/
 #ADD stop.sh /usr/bin/
+
+#添加测试文件
+COPY upload_demo/*.* /root/upload_test
 
 #添加说明文档
 COPY README.md /root
