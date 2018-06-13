@@ -76,6 +76,9 @@ COPY nginxconf/nginx.conf /usr/local/nginx/conf/nginx.conf
 #RUN sed "s|base_path=/home/yuqing/fastdfs|base_path=/fastdfs/tracker|g" /etc/fdfs/client.conf
 COPY fdfsconf/*.* /etc/fdfs/
 
+#简单集群配置参考
+#COPY colony_fdfsconf/*.* /etc/fdfs/
+
 #添加启动脚本
 COPY start.sh /usr/bin/
 #ADD stop.sh /usr/bin/
