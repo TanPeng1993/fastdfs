@@ -19,7 +19,6 @@ RUN mkdir -p /fastdfs/tracker
 RUN mkdir -p /fastdfs/storage
 RUN mkdir -p /root/upload_test 
 #RUN mkdir -p /home/yuqing/fastdfs
-#RUN mkdir -p /logs
   
 #切换到安装目录准备下载安装包
 WORKDIR /usr/local/src
@@ -61,7 +60,7 @@ RUN make && make install
 
 #替换掉nginx默认配置文件
 RUN rm -f /usr/local/nginx/conf/nginx.conf
-COPY nginx.conf /usr/local/nginx/conf/nginx.conf
+COPY nginxconf/nginx.conf /usr/local/nginx/conf/nginx.conf
 
 #替换默认配置
 #RUN sed "s|base_path=/home/yuqing/fastdfs|base_path=/fastdfs/tracker|g" /etc/fdfs/tracker.conf
@@ -70,7 +69,7 @@ COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 #RUN sed "s|url_have_group_name=false|url_have_group_name=true|g" /etc/fdfs/mod_fastdfs.conf
 #RUN sed "s|store_path0=/home/yuqing/fastdfs|store_path0=/fastdfs/storage|g" /etc/fdfs/mod_fastdfs.conf
 #RUN sed "s|base_path=/home/yuqing/fastdfs|base_path=/fastdfs/tracker|g" /etc/fdfs/client.conf
-COPY conf/*.* /etc/fdfs/
+COPY fdfsconf/*.* /etc/fdfs/
 
 #添加启动脚本
 COPY start.sh /usr/bin/

@@ -20,32 +20,28 @@ else
   fi
 fi
 
-if [ -n "$PORT" ] ; then  
-sed -i "s|^port=.*$|port=${PORT}|g" /etc/fdfs/"$FASTDFS_MODE".conf
-fi
-
-if [ -n "$TRACKER_SERVER" ] ; then  
-
-sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/storage.conf
-sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/client.conf
-
-fi
-
-if [ -n "$GROUP_NAME" ] ; then  
-
-sed -i "s|group_name=.*$|group_name=${GROUP_NAME}|g" /etc/fdfs/storage.conf
-
-fi
-
-# start the fastdfs node.	
+#judge start nginx or fastdfs
 if [ "$1" != "nginx" ] ; then
+  if [ -n "$PORT" ] ; then
+    sed -i "s|^port=.*$|port=${PORT}|g" /etc/fdfs/"$FASTDFS_MODE".conf
+  fi
+
+  if [ -n "$TRACKER_SERVER" ] ; then
+    sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/storage.conf
+    sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/client.conf
+  fi
+
+  if [ -n "$GROUP_NAME" ] ; then
+    sed -i "s|group_name=.*$|group_name=${GROUP_NAME}|g" /etc/fdfs/storage.conf
+  fi
+
   FASTDFS_LOG_FILE="${FASTDFS_BASE_PATH}/logs/${FASTDFS_MODE}d.log"
   PID_NUMBER="${FASTDFS_BASE_PATH}/data/fdfs_${FASTDFS_MODE}d.pid"
 
   if [ -f "$FASTDFS_LOG_FILE" ]; then
           rm "$FASTDFS_LOG_FILE"
   fi
-  
+  # start the fastdfs node.   
   echo "尝试启动$FASTDFS_MODE节点..."
   fdfs_${FASTDFS_MODE}d /etc/fdfs/${FASTDFS_MODE}.conf start
 else  #设置nginx日志位置
