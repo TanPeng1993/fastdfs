@@ -1,4 +1,4 @@
-#版本 1.0.0
+#版本 1.2.0
 
 #基础镜像Centos7
 FROM centos:7
@@ -101,7 +101,7 @@ RUN cp /usr/local/src/fastdht/conf/fdht_servers.conf /etc/fdht
 #软件配置
 #替换掉nginx默认配置文件
 #RUN rm -f /usr/local/nginx/conf/nginx.conf
-#COPY nginxconf/nginx.conf /usr/local/nginx/conf/nginx.conf
+#COPY nginxconf/nginx_storage.conf /usr/local/nginx/conf/nginx.conf
 #拷贝nginx的Storage配置和Tracker配置
 COPY nginxconf/*.* /usr/local/src/fdfs_nginx_conf/
 
@@ -123,18 +123,18 @@ RUN sed -i -e "s|base_path=/home/yuqing/fastdht|base_path=/fastdfs/fastdht|g" -e
 
 #简单配置单机参考,请注释上面的替换默认配置部分和前面的放入配置文件部分COPY命令,包括mod_fastdfs.conf配置文件，修改fdfsconf文件夹中对应文件的IP地址
 #COPY fdfsconf/*.* /etc/fdfs/
-#启用fdht
-#COPY fdfsconf_dht/*.* /etc/fdfs/
 
 #简单集群配置参考,请注释上面的替换默认配置部分和前面的放入配置文件部分COPY命令,包括mod_fastdfs.conf配置文件，修改colony_fdfsconf文件夹中对应文件的IP地址
 #COPY colony_fdfsconf/*.* /etc/fdfs/
 
-#修改fdhtconf文件夹中对应文件的IP地址
+#启用带fdht的集群，请注释上面的替换默认配置部分和前面的放入配置文件部分COPY命令,包括mod_fastdfs.conf配置文件以及拷贝fastdht配置部分，修改fdhtconf文件夹中对应文件的IP地址
+#COPY colony_fdfsconf_dht/*.* /etc/fdfs/
 #COPY fdhtconf/*.* /etc/fdht/
 
 
 #添加启动脚本
 COPY start.sh /usr/bin/
+#COPY new_start.sh /usr/bin/
 #ADD stop.sh /usr/bin/
 
 #添加测试文件
@@ -148,6 +148,7 @@ WORKDIR /root
 
 #添加执行权限
 RUN chmod +x /usr/bin/start.sh
+#RUN chmod +x /usr/bin/new_start.sh
 #RUN chmod +x /usr/bin/stop.sh
 
 #暴露端口
@@ -155,7 +156,7 @@ EXPOSE 22122 23000 8080 8888
 
 #启动fastdfs
 ENTRYPOINT ["/usr/bin/start.sh"]
-
+#ENTRYPOINT ["/usr/bin/new_start.sh"]
 CMD  ["tracker"]
 
 
