@@ -1,6 +1,6 @@
 #!/bin/bash
 #set -e
-echo "启动参数$1"
+echo "本次启动参数 $1"
 if [ "$1" = "monitor" ] ; then
   if [ -n "$TRACKER_SERVER" ] ; then  
     sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/client.conf
@@ -49,7 +49,7 @@ elif [ "$1" = "ngx-tra" ] || [ "$1" = "ngx-sto" ] || [ "$1" = "fastdht" ]; then 
     fi
 
     FASTDFS_LOG_FILE="/fastdfs/fastdht/logs/fdhtd.log"
-    #PID_NUMBER="/fastdfs/fastdht/logs/fdhtd.pid"
+    PID_NUMBER="/fastdfs/fastdht/data/fdhtd.pid"
   fi  
 else 
 #  FASTDFS_MODE="tracker"
@@ -63,6 +63,13 @@ fi
 
 if [ -f "$FASTDFS_LOG_FILE" ]; then
     rm "$FASTDFS_LOG_FILE"
+fi
+
+#start the fastdht
+#fdht放在前面是因为fastdht必须先启动去重才会生效
+if [[ "$1" =~ "storage-dht" ]] || [ "$1" == "fastdht" ] ; then
+  echo "正在启动fastdht..."
+  fdhtd /etc/fdht/fdhtd.conf
 fi
 
 #judge start 'nginx for tracker' or 'nginx for storage' or 'fastdht'.
@@ -88,8 +95,10 @@ if [ "$1" != "ngx-tra" ] && [ "$1" != "ngx-sto" ] && [ "$1" != "fastdht" ] ; the
 
 
   # start the fastdfs node.   
-#  sleep 200s
   echo "尝试调用命令 fdfs_${FASTDFS_MODE}d /etc/fdfs/${FASTDFS_MODE}.conf start.."
+  if [[ "$1" =~ "storage-dht" ]] ; then #留出充分时间让fastdht启动
+    sleep 20s
+  fi
   fdfs_${FASTDFS_MODE}d /etc/fdfs/${FASTDFS_MODE}.conf start
   echo "正在启动$FASTDFS_MODE..."
 #else  #设置nginx和fastdht
@@ -126,12 +135,6 @@ fi
 if [[ "$1" =~ "nginx" ]] || [[ "$1" =~ "ngx" ]] ; then
   echo "正在启动nginx..."
   /usr/local/nginx/sbin/nginx
-fi
-
-#start the fastdht
-if [[ "$1" =~ "storage-dht" ]] || [ "$1" == "fastdht" ] ; then
-  echo "正在启动fastdht..."
-  fdhtd /etc/fdht/fdhtd.conf
 fi
 
 # wait for pid file(important!),the max start time is 5 seconds,if the pid number does not appear in 5 seconds,start failed.
