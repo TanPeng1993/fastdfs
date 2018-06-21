@@ -1,27 +1,72 @@
 #!/bin/bash
 #set -e
+echo "启动参数$1"
 if [ "$1" = "monitor" ] ; then
   if [ -n "$TRACKER_SERVER" ] ; then  
     sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/client.conf
   fi
   fdfs_monitor /etc/fdfs/client.conf
   exit 0
-elif [ "$1" = "storage" -o "$1" = "storage-nginx" ] ; then
+elif [ "$1" == "storage" ] || [ "$1" == "storage-nginx" ] || [ "$1" == "storage-dht" ] || [ "$1" == "storage-dht-nginx" ] ; then
   FASTDFS_MODE="storage"
-  echo "正在准备初始化storage..."
+  echo "正在准备初始化storage，dth或nginx..."
   if [ ! -n "$FASTDFS_BASE_PATH" ] ; then
     FASTDFS_BASE_PATH="/fastdfs/storage"
   fi
-else 
+  if [ "$1" == *"nginx"* ] ; then
+    \cp -f /usr/local/src/fdfs_nginx_conf/nginx_storage.conf /usr/local/nginx/conf/nginx.conf 
+  fi
+elif [ "$1" = "tracker-nginx" ] || [ "$1" = "tracker" ]; then
   FASTDFS_MODE="tracker"
-  echo "正在准备初始化tracker..."
+  echo "正在准备初始化tracker或tracker-nginx..."
   if [ ! -n "$FASTDFS_BASE_PATH" ] ; then
     FASTDFS_BASE_PATH="/fastdfs/tracker"
   fi
+  if [ "$1" == *"nginx"* ] ; then
+    rm -f /etc/fdfs/mod_fastdfs.conf
+    \cp -f /usr/local/src/fdfs_nginx_conf/nginx_tracker.conf /usr/local/nginx/conf/nginx.conf 
+  fi
+elif [ "$1" = "ngx-tra" ] || [ "$1" = "ngx-sto" ] || [ "$1" = "fastdht" ]; then  #设置nginx和fastdht
+  echo "正在准备启动nginx或fastdht..."
+  if [ "$1" = "ngx-tra" -o "$1" = "ngx-sto" ] ; then
+    if [ -n "$TRACKER_SERVER" ] ; then
+       sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/mod_fastdfs.conf
+    fi
+
+    if [ "$1" = "ngx-tra" ] ; then  #nginx
+       rm -f /etc/fdfs/mod_fastdfs.conf
+       \cp -f /usr/local/src/fdfs_nginx_conf/nginx_tracker.conf /usr/local/nginx/conf/nginx.conf
+    else   #nginx-storage
+       \cp -f /usr/local/src/fdfs_nginx_conf/nginx_storage.conf /usr/local/nginx/conf/nginx.conf
+    fi
+
+    FASTDFS_LOG_FILE="/usr/local/nginx/logs/error.log"
+    PID_NUMBER="/usr/local/nginx/logs/nginx.pid"
+
+  else  #fastdht
+    if [ -n "$STORAGE_SERVER" ] ; then
+       sed -i "s|group0 =.*$|group0 = ${STORAGE_SERVER}|g" /etc/fdht/fdht_servers.conf
+    fi
+
+    FASTDFS_LOG_FILE="/fastdfs/fastdht/logs/fdhtd.log"
+    #PID_NUMBER="/fastdfs/fastdht/logs/fdhtd.pid"
+  fi  
+else 
+#  FASTDFS_MODE="tracker"
+#  echo "正在准备初始化tracker..."
+#  if [ ! -n "$FASTDFS_BASE_PATH" ] ; then
+#    FASTDFS_BASE_PATH="/fastdfs/tracker"
+#  fi
+  echo "输入参数不对，无法成功启动对应的容器..."
+  exit 0
 fi
 
-#judge start nginx or fastdfs
-if [ "$1" != "nginx" ] ; then
+if [ -f "$FASTDFS_LOG_FILE" ]; then
+    rm "$FASTDFS_LOG_FILE"
+fi
+
+#judge start 'nginx for tracker' or 'nginx for storage' or 'fastdht'.
+if [ "$1" != "ngx-tra" ] && [ "$1" != "ngx-sto" ] && [ "$1" != "fastdht" ] ; then
   if [ -n "$PORT" ] ; then
     sed -i "s|^port=.*$|port=${PORT}|g" /etc/fdfs/"$FASTDFS_MODE".conf
   fi
@@ -41,29 +86,52 @@ if [ "$1" != "nginx" ] ; then
   FASTDFS_LOG_FILE="${FASTDFS_BASE_PATH}/logs/${FASTDFS_MODE}d.log"
   PID_NUMBER="${FASTDFS_BASE_PATH}/data/fdfs_${FASTDFS_MODE}d.pid"
 
-  if [ -f "$FASTDFS_LOG_FILE" ]; then
-          rm "$FASTDFS_LOG_FILE"
-  fi
-  # start the fastdfs node.   
-  echo "尝试启动$FASTDFS_MODE节点..."
-  fdfs_${FASTDFS_MODE}d /etc/fdfs/${FASTDFS_MODE}.conf start
-else  #设置nginx
-  if [ -n "$TRACKER_SERVER" ] ; then
-    sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/mod_fastdfs.conf
-  fi
 
-  FASTDFS_LOG_FILE="/usr/local/nginx/logs/error.log"
-  PID_NUMBER="/usr/local/nginx/logs/nginx.pid"
-  
-  if [ -f "$FASTDFS_LOG_FILE" ]; then
-          rm "$FASTDFS_LOG_FILE"
-  fi
+  # start the fastdfs node.   
+#  sleep 200s
+  echo "尝试调用命令 fdfs_${FASTDFS_MODE}d /etc/fdfs/${FASTDFS_MODE}.conf start.."
+  fdfs_${FASTDFS_MODE}d /etc/fdfs/${FASTDFS_MODE}.conf start
+  echo "正在启动$FASTDFS_MODE..."
+#else  #设置nginx和fastdht
+#  if [ "$1" = "ngx-tra" -o "$1" = "ngx-sto" ] ; then 
+#    if [ -n "$TRACKER_SERVER" ] ; then
+#       sed -i "s|tracker_server=.*$|tracker_server=${TRACKER_SERVER}|g" /etc/fdfs/mod_fastdfs.conf
+#    fi
+#
+#    if [ "$1" = "ngx-tra" ] ; then  #nginx
+#       rm -f /etc/fdfs/mod_fastdfs.conf
+#       \cp -f /usr/local/src/fdfs_nginx_conf/nginx_tracker.conf /usr/local/nginx/conf/nginx.conf 
+#    else   #nginx-storage
+#       \cp -f /usr/local/src/fdfs_nginx_conf/nginx_storage.conf /usr/local/nginx/conf/nginx.conf 
+#    fi
+#	
+#    FASTDFS_LOG_FILE="/usr/local/nginx/logs/error.log"
+#    PID_NUMBER="/usr/local/nginx/logs/nginx.pid"
+#  
+#  else  #fastdht
+#    if [ -n "$STORAGE_SERVER" ] ; then
+#       sed -i "s|group0 =.*$|group0 = ${STORAGE_SERVER}|g" /etc/fdht/fdht_servers.conf
+#    fi
+#	
+#    FASTDFS_LOG_FILE="/fastdfs/fastdht/logs/fdhtd.log"
+#    #PID_NUMBER="/fastdfs/fastdht/logs/fdhtd.pid"
+#  fi
 fi
 
+#if [ -f "$FASTDFS_LOG_FILE" ]; then
+#    rm "$FASTDFS_LOG_FILE"
+#fi
+
 #start the nginx
-if [ "$1" = "storage-nginx" -o "$1" = "nginx" ] ; then
+if [[ "$1" =~ "nginx" ]] || [[ "$1" =~ "ngx" ]] ; then
   echo "正在启动nginx..."
   /usr/local/nginx/sbin/nginx
+fi
+
+#start the fastdht
+if [[ "$1" =~ "storage-dht" ]] || [ "$1" == "fastdht" ] ; then
+  echo "正在启动fastdht..."
+  fdhtd /etc/fdht/fdhtd.conf
 fi
 
 # wait for pid file(important!),the max start time is 5 seconds,if the pid number does not appear in 5 seconds,start failed.
@@ -97,3 +165,4 @@ done
 #     echo
 # fi
 tail -f "$FASTDFS_LOG_FILE"
+

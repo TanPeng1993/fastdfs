@@ -134,7 +134,7 @@ RUN sed -i -e "s|base_path=/home/yuqing/fastdht|base_path=/fastdfs/fastdht|g" -e
 
 #添加启动脚本
 COPY start.sh /usr/bin/
-#COPY new_start.sh /usr/bin/
+#COPY old_start.sh /usr/bin/
 #ADD stop.sh /usr/bin/
 
 #添加测试文件
@@ -148,7 +148,7 @@ WORKDIR /root
 
 #添加执行权限
 RUN chmod +x /usr/bin/start.sh
-#RUN chmod +x /usr/bin/new_start.sh
+#RUN chmod +x /usr/bin/old_start.sh
 #RUN chmod +x /usr/bin/stop.sh
 
 #暴露端口
@@ -156,7 +156,7 @@ EXPOSE 22122 23000 8080 8888
 
 #启动fastdfs
 ENTRYPOINT ["/usr/bin/start.sh"]
-#ENTRYPOINT ["/usr/bin/new_start.sh"]
-CMD  ["tracker"]
+#ENTRYPOINT ["/usr/bin/old_start.sh"]
+CMD  ["storage"]
 
 
